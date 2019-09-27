@@ -34,8 +34,26 @@ module SqlTracker
       queries.each do |query|
         payload = { sql: query }
         handler.call('xxx', Time.now.to_f, Time.now.to_f, 1, payload)
-        assert_equal(0, handler.data.keys.count)
       end
+
+      assert_equal(0, handler.data.keys.count)
+    end
+
+    def test_should_not_track_cached_sql_command
+      config = sample_config
+      config.ignore_cache = true
+      handler = SqlTracker::Handler.new(config)
+
+      payloads = [
+          { sql: 'select id from products'},
+          { sql: 'SELECT * FROM users', cached: true }
+      ]
+
+      payloads.each do |payload|
+        handler.call('xxx', Time.now.to_f, Time.now.to_f, 1, payload)
+      end
+
+      assert_equal(1, handler.data.keys.count)
     end
 
     def test_query_count_should_be_case_insensitive

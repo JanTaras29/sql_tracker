@@ -15,13 +15,12 @@ module SqlTracker
     def call(_name, started, finished, _id, payload)
       return unless @config.enabled
 
-      sql = payload[:sql].dup
-      return unless track?(sql)
+      return unless track?(payload)
 
       cleaned_trace = clean_trace(caller)
       return if cleaned_trace.empty?
 
-      sql = clean_sql_query(sql)
+      sql = clean_sql_query(payload[:sql].dup)
       duration = 1000.0 * (finished - started) # in milliseconds
       sql_key = Digest::MD5.hexdigest(sql.downcase)
 
@@ -32,9 +31,10 @@ module SqlTracker
       end
     end
 
-    def track?(sql)
+    def track?(payload)
       return true unless @config.tracked_sql_command.respond_to?(:join)
-      tracked_sql_matcher =~ sql
+      return false if @config.ignore_cache && payload[:cached]
+      tracked_sql_matcher =~ payload[:sql]
     end
 
     def tracked_sql_matcher
