@@ -11,7 +11,7 @@ module SqlTracker
         self.tracked_paths ||= %w(app lib)
         self.tracked_sql_command ||= %w(SELECT INSERT UPDATE DELETE)
         # Ignore queries called from ActiveRecord's SQL Cahce
-        self.ignore_cache = true if self.ignore_cache.nil?
+        self.ignore_cache ||= false
         self.output_path ||= begin
           if defined?(::Rails) && ::Rails.root
             File.join(::Rails.root.to_s, 'tmp')

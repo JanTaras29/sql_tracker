@@ -25,9 +25,9 @@ module SqlTracker
       sql_key = Digest::MD5.hexdigest(sql.downcase)
 
       if @data.key?(sql_key)
-        update_data(sql_key, cleaned_trace, duration)
+        update_data(sql_key, cleaned_trace, duration, cached: cache_payload?(payload))
       else
-        add_data(sql_key, sql, cleaned_trace, duration)
+        add_data(sql_key, sql, cleaned_trace, duration, cached: cache_payload?(payload))
       end
     end
 
@@ -78,20 +78,26 @@ module SqlTracker
       Rails.backtrace_cleaner.clean(trace)
     end
 
-    def add_data(key, sql, trace, duration)
+    def add_data(key, sql, trace, duration, cached: false)
       @data[key] = {}
       @data[key][:sql] = sql
       @data[key][:count] = 1
+      @data[key][:cached_count] = 1 if cached
       @data[key][:duration] = duration
       @data[key][:source] = [trace.first]
       @data
     end
 
-    def update_data(key, trace, duration)
+    def update_data(key, trace, duration, cached: false)
       @data[key][:count] += 1
+      increase_cached_count(key) if cached
       @data[key][:duration] += duration
       @data[key][:source] << trace.first
       @data
+    end
+
+    def increase_cached_count(key)
+      @data[key].key?(:cached_count) ? @data[key][:cached_count] += 1 : @data[key][:cached_count] = 1
     end
 
     # save the data to file

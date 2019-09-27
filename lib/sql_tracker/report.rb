@@ -48,7 +48,7 @@ module SqlTracker
                       end
 
         (0...total_lines).each do |line|
-          count = line == 0 ? row['count'].to_s : ''
+          count = line == 0 ? count_formatted(row) : ''
           duration = line == 0 ? avg_duration.round(2) : ''
           source = source_list.length > line ? source_list[line] : ''
           query = row['sql'].length > line ? chopped_sql[line] : ''
@@ -56,6 +56,10 @@ module SqlTracker
         end
         f.puts '-' * terminal_width
       end
+    end
+
+    def count_formatted(row)
+      row.fetch('cached_count', 0) > 0 ? "#{row['count']} (#{row['cached_count']} cached)" : row['count'].to_s
     end
 
     def row_format
@@ -89,6 +93,7 @@ module SqlTracker
         elsif r2.key?(id)
           memo[id] = r1[id]
           memo[id]['count'] += r2[id]['count']
+          memo[id]['cached_count'] += r2[id]['cached_count']
           memo[id]['duration'] += r2[id]['duration']
           memo[id]['source'] += r2[id]['source']
         else
