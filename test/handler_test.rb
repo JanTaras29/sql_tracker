@@ -42,11 +42,13 @@ module SqlTracker
     def test_should_not_track_cached_sql_command
       config = sample_config
       config.ignore_cache = true
+      config.tracked_sql_command = %w(SELECT)
       handler = SqlTracker::Handler.new(config)
 
       payloads = [
           { sql: 'select id from products'},
-          { sql: 'SELECT * FROM users', cached: true }
+          { sql: 'SELECT * FROM users', cached: true },
+          { sql: 'SELECT * FROM users', name: 'CACHE' }
       ]
 
       payloads.each do |payload|

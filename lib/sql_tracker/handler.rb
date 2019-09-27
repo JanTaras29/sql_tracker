@@ -32,9 +32,13 @@ module SqlTracker
     end
 
     def track?(payload)
+      return false if @config.ignore_cache && cache_payload?(payload)
       return true unless @config.tracked_sql_command.respond_to?(:join)
-      return false if @config.ignore_cache && payload[:cached]
       tracked_sql_matcher =~ payload[:sql]
+    end
+
+    def cache_payload?(payload)
+      payload[:cached] || payload[:name] == 'CACHE'
     end
 
     def tracked_sql_matcher
